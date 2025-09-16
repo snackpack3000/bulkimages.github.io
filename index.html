@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Image Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .dropzone-active {
+            border-color: #2563eb;
+            background-color: #eff6ff;
+        }
+        .swatch {
+            transition: transform 0.1s ease-in-out;
+        }
+        .swatch:hover {
+            transform: scale(1.1);
+        }
+        .form-radio {
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: #fff;
+            margin: 0;
+            font: inherit;
+            color: currentColor;
+            width: 1.15em;
+            height: 1.15em;
+            border: 0.15em solid currentColor;
+            border-radius: 50%;
+            transform: translateY(-0.075em);
+            display: grid;
+            place-content: center;
+        }
+        .form-radio::before {
+            content: "";
+            width: 0.65em;
+            height: 0.65em;
+            border-radius: 50%;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            box-shadow: inset 1em 1em #2563eb;
+        }
+        .form-radio:checked::before {
+            transform: scale(1);
+        }
+        /* Custom style for color input to remove default styling */
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-5xl bg-white rounded-xl shadow-lg p-6 md:p-8">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-slate-800">Bulk Image Generator</h1>
+            <p class="text-slate-500 mt-2">Upload a logo, design your background, and generate 6 image sizes in one click.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            <!-- Left Column -->
+            <div class="flex flex-col gap-8">
+                <!-- Step 1: Upload Logo -->
+                <div class="flex flex-col">
+                    <label class="font-semibold text-slate-700 mb-2">Step 1: Upload Your Logo</label>
+                    <div id="dropzone" class="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+                        <div id="dropzone-prompt" class="flex flex-col items-center justify-center pt-5 pb-6 text-center">
+                            <svg class="w-8 h-8 mb-4 text-slate-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                            </svg>
+                            <p class="mb-2 text-sm text-slate-500"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                            <p class="text-xs text-slate-500">PNG, JPG, or SVG</p>
+                        </div>
+                        <img id="logo-preview" src="" class="hidden absolute h-full w-full object-contain p-4" alt="Logo Preview"/>
+                        <input id="file-upload" type="file" class="hidden" accept="image/png, image/jpeg, image/svg+xml" />
+                    </div>
+                    <div id="file-error" class="text-red-500 text-sm mt-2 hidden"></div>
+                </div>
+
+                <!-- Step 3: Add Overlay -->
+                <div>
+                    <label class="font-semibold text-slate-700 mb-3 block">Step 3: Add Overlay (Optional)</label>
+                    <div class="flex items-center gap-6">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="overlay-logo" value="none" checked class="form-radio text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-slate-700">None</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="overlay-logo" value="atp" class="form-radio text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-slate-700">ATP</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="overlay-logo" value="wta" class="form-radio text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-slate-700">WTA</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="flex flex-col">
+                <label class="font-semibold text-slate-700 mb-2">Step 2: Design Background</label>
+                <div class="mb-4">
+                    <label class="text-sm text-slate-600 mb-2 block font-medium">Background Type:</label>
+                    <div class="flex items-center gap-6">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="bg-type" value="solid" checked class="form-radio text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-slate-700">Solid Color</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="bg-type" value="diagonal" class="form-radio text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-slate-700">Diagonal Split</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="add-blur" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span class="ml-2 text-sm text-slate-700">Add Blur</span>
+                    </label>
+                </div>
+
+                <div id="blur-slider-wrapper" class="mt-4 hidden">
+                    <label for="blur-intensity" class="text-sm text-slate-600 font-medium mb-2 block">Blur Intensity:</label>
+                    <input type="range" id="blur-intensity" min="0" max="100" value="50" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                    <div id="color-1-wrapper">
+                        <label for="hex-input-1" class="text-sm text-slate-600 font-medium mb-2 block">Color 1:</label>
+                        <div class="flex items-center gap-2">
+                            <input type="color" id="color-picker-1" value="#000000" class="p-0 h-10 w-12 block bg-white border border-slate-300 rounded-md cursor-pointer">
+                            <input type="text" id="hex-input-1" value="#000000" maxlength="7" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        </div>
+                    </div>
+                    <div id="color-2-wrapper" class="hidden">
+                        <label for="hex-input-2" class="text-sm text-slate-600 font-medium mb-2 block">Color 2:</label>
+                        <div class="flex items-center gap-2">
+                            <input type="color" id="color-picker-2" value="#FFFFFF" class="p-0 h-10 w-12 block bg-white border border-slate-300 rounded-md cursor-pointer">
+                            <input type="text" id="hex-input-2" value="#FFFFFF" maxlength="7" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4" id="presets-1-wrapper">
+                    <p class="text-sm text-slate-600 mb-2">Presets (sets Color 1):</p>
+                    <div class="flex flex-wrap gap-2">
+                        <div class="swatch w-8 h-8 rounded-full cursor-pointer bg-white border border-slate-200" data-color="#FFFFFF"></div>
+                        <div class="swatch w-8 h-8 rounded-full cursor-pointer bg-black" data-color="#000000"></div>
+                        <div class="swatch w-8 h-8 rounded-full cursor-pointer bg-slate-200" data-color="#E2E8F0"></div>
+                        <div class="swatch w-8 h-8 rounded-full cursor-pointer bg-red-500" data-color="#EF4444"></div>
+                        <div class="swatch w-8 h-8 rounded-full cursor-pointer bg-blue-500" data-color="#3B82F6"></div>
+                        <div class="swatch w-8 h-8 rounded-full cursor-pointer bg-green-500" data-color="#22C55E"></div>
+                        <div class="swatch w-8 h-8 rounded-full cursor-pointer bg-yellow-400" data-color="#FACC15"></div>
+                    </div>
+                </div>
+
+                <div class="mt-4 hidden" id="presets-2-wrapper">
+                    <p class="text-sm text-slate-600 mb-2">Presets (sets Color 2):</p>
+                    <div class="flex flex-wrap gap-2">
+                        <div class="swatch w-8 h-8 rounded-full cursor-pointer bg-white border border-slate-200" data-color="#FFFFFF"></div>
+                        <div class="swatch w-8 h-8 rounded-full cursor-pointer bg-black" data-color="#000000"></div>
+                        <div class="swatch w-8 h-8 rounded-full cursor-pointer bg-slate-200" data-color="#E2E8F0"></div>
+                        <div class="swatch w-8 h-8 rounded-full cursor-pointer bg-red-500" data-color="#EF4444"></div>
+                        <div class="swatch w-8 h-8 rounded-full cursor-pointer bg-blue-500" data-color="#3B82F6"></div>
+                        <div class="swatch w-8 h-8 rounded-full cursor-pointer bg-green-500" data-color="#22C55E"></div>
+                        <div class="swatch w-8 h-8 rounded-full cursor-pointer bg-yellow-400" data-color="#FACC15"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Generate -->
+        <div class="mt-8 text-center">
+             <button id="generate-btn" class="w-full md:w-auto bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-all transform hover:scale-105 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:scale-100">
+                Generate Images
+            </button>
+        </div>
+
+        <!-- Generated Images Section -->
+        <div id="output-section" class="mt-10 hidden">
+            <div class="flex justify-between items-center mb-4 border-t pt-6">
+                <h2 class="text-2xl font-bold text-slate-800">Your Images</h2>
+                <button id="download-all-btn" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-green-700 transition-all">
+                    Download All (.zip)
+                </button>
+            </div>
+            <div id="image-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Image cards will be inserted here -->
+            </div>
+            <div id="loading-spinner" class="text-center p-8 hidden">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <p class="mt-4 text-slate-600">Generating your images...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Preview Modal -->
+    <div id="image-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4 transition-opacity duration-300">
+        <div class="relative bg-white p-4 rounded-lg max-w-4xl max-h-[90vh] w-full">
+            <button id="modal-close-btn" class="absolute -top-3 -right-3 w-8 h-8 bg-white rounded-full text-slate-700 hover:text-black flex items-center justify-center z-10 shadow-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <img id="modal-image" src="" class="w-full object-contain" style="max-height: calc(90vh - 2rem);" alt="Enlarged image preview">
+        </div>
+    </div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        const dropzone = document.getElementById('dropzone');
+        const fileUpload = document.getElementById('file-upload');
+        const logoPreview = document.getElementById('logo-preview');
+        const dropzonePrompt = document.getElementById('dropzone-prompt');
+        const generateBtn = document.getElementById('generate-btn');
+        const swatches1 = document.querySelectorAll('#presets-1-wrapper .swatch');
+        const swatches2 = document.querySelectorAll('#presets-2-wrapper .swatch');
+        const outputSection = document.getElementById('output-section');
+        const imageGrid = document.getElementById('image-grid');
+        const downloadAllBtn = document.getElementById('download-all-btn');
+        const fileError = document.getElementById('file-error');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        
+        const bgTypeRadios = document.querySelectorAll('input[name="bg-type"]');
+        const color2Wrapper = document.getElementById('color-2-wrapper');
+        const colorPicker1 = document.getElementById('color-picker-1');
+        const hexInput1 = document.getElementById('hex-input-1');
+        const colorPicker2 = document.getElementById('color-picker-2');
+        const hexInput2 = document.getElementById('hex-input-2');
+        const presets2Wrapper = document.getElementById('presets-2-wrapper');
+        const addBlurCheckbox = document.getElementById('add-blur');
+        const blurSliderWrapper = document.getElementById('blur-slider-wrapper');
+        const blurIntensity = document.getElementById('blur-intensity');
+
+        const imageModal = document.getElementById('image-modal');
+        const modalImage = document.getElementById('modal-image');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
+        let uploadedLogo = null;
+        
+        // --- Preload Overlay Logos ---
+        const atpLogo = new Image();
+        atpLogo.crossOrigin = "Anonymous";
+        atpLogo.src = 'https://i.imgur.com/A2bnkF3.png';
+
+        const wtaLogo = new Image();
+        wtaLogo.crossOrigin = "Anonymous";
+        wtaLogo.src = 'https://i.imgur.com/4FCZJdT.png';
+        
+        const overlayLogos = { atp: atpLogo, wta: wtaLogo };
+
+        const SIZES = [
+            { width: 3000, height: 3000 },
+            { width: 4096, height: 2048 },
+            { width: 1920, height: 2880 },
+            { width: 2160, height: 2880 },
+            { width: 2048, height: 1536 },
+            { width: 3840, height: 2160 }
+        ];
+
+        // --- File Upload Logic ---
+        dropzone.addEventListener('click', () => fileUpload.click());
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => dropzone.addEventListener(eventName, preventDefaults, false));
+        function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+        ['dragenter', 'dragover'].forEach(eventName => dropzone.addEventListener(eventName, () => dropzone.classList.add('dropzone-active'), false));
+        ['dragleave', 'drop'].forEach(eventName => dropzone.addEventListener(eventName, () => dropzone.classList.remove('dropzone-active'), false));
+        dropzone.addEventListener('drop', handleDrop, false);
+        fileUpload.addEventListener('change', handleFileSelect, false);
+
+        function handleDrop(e) { handleFile(e.dataTransfer.files[0]); }
+        function handleFileSelect(e) { handleFile(e.target.files[0]); }
+
+        function handleFile(file) {
+            fileError.classList.add('hidden');
+            if (!file || !file.type.startsWith('image/')) {
+                fileError.textContent = 'Please select a valid image file (PNG, JPG, SVG).';
+                fileError.classList.remove('hidden');
+                uploadedLogo = null;
+                updateGenerateButtonState();
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadedLogo = new Image();
+                uploadedLogo.onload = () => {
+                    if (uploadedLogo.width < 50 || uploadedLogo.height < 50) {
+                         fileError.textContent = 'Logo is too small. Please use an image at least 50x50 pixels.';
+                         fileError.classList.remove('hidden');
+                         uploadedLogo = null;
+                    } else {
+                        logoPreview.src = e.target.result;
+                        logoPreview.classList.remove('hidden');
+                        dropzonePrompt.classList.add('hidden');
+                    }
+                    updateGenerateButtonState();
+                };
+                uploadedLogo.onerror = () => {
+                    fileError.textContent = 'Could not load the image file.';
+                    fileError.classList.remove('hidden');
+                    uploadedLogo = null;
+                    updateGenerateButtonState();
+                }
+                uploadedLogo.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        // --- Color Selection Logic ---
+        function syncColorInputs(picker, hex) {
+            picker.addEventListener('input', (e) => hex.value = e.target.value);
+            hex.addEventListener('input', (e) => {
+                if (/^#[0-9A-F]{6}$/i.test(e.target.value)) { picker.value = e.target.value; }
+            });
+        }
+        syncColorInputs(colorPicker1, hexInput1);
+        syncColorInputs(colorPicker2, hexInput2);
+
+        swatches1.forEach(swatch => {
+            swatch.addEventListener('click', () => {
+                const color = swatch.dataset.color;
+                colorPicker1.value = color;
+                hexInput1.value = color;
+            });
+        });
+
+        swatches2.forEach(swatch => {
+            swatch.addEventListener('click', () => {
+                const color = swatch.dataset.color;
+                colorPicker2.value = color;
+                hexInput2.value = color;
+            });
+        });
+        
+        bgTypeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'diagonal') {
+                    color2Wrapper.classList.remove('hidden');
+                    presets2Wrapper.classList.remove('hidden');
+                } else {
+                    color2Wrapper.classList.add('hidden');
+                    presets2Wrapper.classList.add('hidden');
+                }
+            });
+        });
+        
+        addBlurCheckbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                blurSliderWrapper.classList.remove('hidden');
+            } else {
+                blurSliderWrapper.classList.add('hidden');
+            }
+        });
+
+        // --- Button State Logic ---
+        function updateGenerateButtonState() { generateBtn.disabled = !uploadedLogo; }
+        updateGenerateButtonState();
+
+        // --- Image Generation Logic ---
+        generateBtn.addEventListener('click', generateImages);
+
+        async function generateImages() {
+            if (!uploadedLogo) {
+                alert('Please upload a logo first.'); 
+                return;
+            }
+            
+            imageGrid.innerHTML = '';
+            outputSection.classList.remove('hidden');
+            loadingSpinner.classList.remove('hidden');
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'Generating...';
+
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            const bgType = document.querySelector('input[name="bg-type"]:checked').value;
+            const color1 = hexInput1.value;
+            const color2 = hexInput2.value;
+            const selectedOverlay = document.querySelector('input[name="overlay-logo"]:checked').value;
+            const overlayImage = overlayLogos[selectedOverlay];
+            const generatedImages = [];
+
+            for (const size of SIZES) {
+                const canvas = document.createElement('canvas');
+                canvas.width = size.width;
+                canvas.height = size.height;
+                const ctx = canvas.getContext('2d');
+
+                // 1. Fill background
+                if (bgType === 'solid') {
+                    ctx.fillStyle = color1;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                } else { // 'diagonal'
+                    const offset = canvas.width * 0.1;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(canvas.width / 2 + offset, 0);
+                    ctx.lineTo(canvas.width / 2 - offset, canvas.height);
+                    ctx.lineTo(0, canvas.height);
+                    ctx.closePath();
+                    ctx.fillStyle = color1;
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.moveTo(canvas.width / 2 + offset, 0);
+                    ctx.lineTo(canvas.width, 0);
+                    ctx.lineTo(canvas.width, canvas.height);
+                    ctx.lineTo(canvas.width / 2 - offset, canvas.height);
+                    ctx.closePath();
+                    ctx.fillStyle = color2;
+                    ctx.fill();
+                }
+
+                // 2. Apply blur if checked
+                if (addBlurCheckbox.checked) {
+                    const blurValue = blurIntensity.value;
+                    ctx.filter = `blur(${blurValue}px)`;
+                    ctx.drawImage(canvas, 0, 0); // Re-draw the canvas with the filter
+                    ctx.filter = 'none'; // Reset filter
+                }
+
+                // 3. Calculate main logo dimensions
+                const paddingPercent = 0.70;
+                const canvasMinDim = Math.min(canvas.width, canvas.height);
+                const maxLogoDim = canvasMinDim * paddingPercent;
+
+                let logoWidth, logoHeight;
+                const logoAspectRatio = uploadedLogo.width / uploadedLogo.height;
+
+                if (logoAspectRatio > 1) {
+                    logoWidth = maxLogoDim;
+                    logoHeight = maxLogoDim / logoAspectRatio;
+                } else {
+                    logoHeight = maxLogoDim;
+                    logoWidth = maxLogoDim * logoAspectRatio;
+                }
+                
+                if (logoWidth > canvas.width * 0.95) {
+                    logoWidth = canvas.width * 0.95;
+                    logoHeight = logoWidth / logoAspectRatio;
+                }
+                if (logoHeight > canvas.height * 0.95) {
+                    logoHeight = canvas.height * 0.95;
+                    logoWidth = logoHeight * logoAspectRatio;
+                }
+
+                // 4. Center and draw main logo
+                const x = (canvas.width - logoWidth) / 2;
+                const y = (canvas.height - logoHeight) / 2;
+                ctx.drawImage(uploadedLogo, x, y, logoWidth, logoHeight);
+
+                // 5. Draw overlay logo if selected
+                if (overlayImage && overlayImage.complete && overlayImage.naturalWidth !== 0) {
+                    const overlayScaleFactor = 0.36;
+                    const overlayWidth = logoWidth * overlayScaleFactor;
+                    const overlayHeight = (overlayWidth / overlayImage.width) * overlayImage.height;
+                    
+                    // Position at the bottom-middle of the canvas
+                    const bottomPadding = canvas.height * 0.05; // 5% padding from the bottom
+                    const overlayX = (canvas.width - overlayWidth) / 2;
+                    const overlayY = canvas.height - overlayHeight - bottomPadding;
+
+                    // Ensure it doesn't overlap with the main logo
+                    const mainLogoBottom = y + logoHeight;
+                    if (overlayY > mainLogoBottom) { 
+                        ctx.drawImage(overlayImage, overlayX, overlayY, overlayWidth, overlayHeight);
+                    }
+                }
+
+                // 6. Get data URL
+                const dataUrl = canvas.toDataURL('image/png');
+                generatedImages.push({
+                    name: `logo-${size.width}x${size.height}.png`,
+                    dataUrl: dataUrl
+                });
+
+                createImageCard(dataUrl, `${size.width} x ${size.height}`);
+            }
+            
+            loadingSpinner.classList.add('hidden');
+            generateBtn.disabled = false;
+            generateBtn.textContent = 'Generate Images';
+
+            // --- Download All Logic ---
+            downloadAllBtn.onclick = () => {
+                const zip = new JSZip();
+                generatedImages.forEach(img => {
+                    const base64Data = img.dataUrl.split(',')[1];
+                    zip.file(img.name, base64Data, { base64: true });
+                });
+
+                zip.generateAsync({ type: 'blob' }).then(function(content) {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(content);
+                    link.download = 'generated_images.zip';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+            };
+        }
+
+        function createImageCard(dataUrl, dimensionText) {
+            const card = document.createElement('div');
+            card.className = 'bg-slate-50 p-3 rounded-lg shadow-sm border flex flex-col items-center';
+
+            const img = document.createElement('img');
+            img.src = dataUrl;
+            img.className = 'w-full h-auto rounded-md object-contain mb-3 bg-white cursor-pointer';
+            img.style.aspectRatio = '16/9';
+             // Add click event to open modal
+            img.addEventListener('click', () => {
+                modalImage.src = dataUrl;
+                imageModal.classList.remove('hidden');
+            });
+            
+            const info = document.createElement('div');
+            info.className = 'text-center w-full';
+            
+            const dimensions = document.createElement('p');
+            dimensions.textContent = dimensionText;
+            dimensions.className = 'font-semibold text-slate-700';
+
+            const downloadLink = document.createElement('a');
+            downloadLink.href = dataUrl;
+            downloadLink.download = `logo-${dimensionText.replace(' x ', 'x')}.png`;
+            downloadLink.textContent = 'Download';
+            downloadLink.className = 'mt-2 inline-block text-blue-600 hover:text-blue-800 text-sm font-medium';
+
+            info.appendChild(dimensions);
+            info.appendChild(downloadLink);
+            card.appendChild(img);
+            card.appendChild(info);
+            imageGrid.appendChild(card);
+        }
+
+        // --- Modal Close Logic ---
+        function closeModal() {
+            imageModal.classList.add('hidden');
+            modalImage.src = ''; // Clear src to prevent flash of old image
+        }
+
+        modalCloseBtn.addEventListener('click', closeModal);
+        imageModal.addEventListener('click', (e) => {
+            // Close modal if the background overlay is clicked, but not the content inside it
+            if (e.target === imageModal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
+
