@@ -140,6 +140,12 @@
                         <div class="flex items-center gap-2">
                             <input type="color" id="color-picker-1" value="#000000" class="p-0 h-10 w-12 block bg-white border border-slate-300 rounded-md cursor-pointer">
                             <input type="text" id="hex-input-1" value="#000000" maxlength="7" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <button id="eyedropper-1" title="Use Eyedropper" class="p-2 border border-slate-300 rounded-md hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-600">
+                                    <path d="m12 2 7 7-7 7-7-7 7-7Z"/>
+                                    <path d="m2 22 10-10"/>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                     <div id="color-2-wrapper" class="hidden">
@@ -147,6 +153,12 @@
                         <div class="flex items-center gap-2">
                             <input type="color" id="color-picker-2" value="#FFFFFF" class="p-0 h-10 w-12 block bg-white border border-slate-300 rounded-md cursor-pointer">
                             <input type="text" id="hex-input-2" value="#FFFFFF" maxlength="7" class="w-full px-3 py-2 text-slate-700 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <button id="eyedropper-2" title="Use Eyedropper" class="p-2 border border-slate-300 rounded-md hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-600">
+                                    <path d="m12 2 7 7-7 7-7-7 7-7Z"/>
+                                    <path d="m2 22 10-10"/>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -324,6 +336,34 @@
         }
         syncColorInputs(colorPicker1, hexInput1);
         syncColorInputs(colorPicker2, hexInput2);
+        
+        function setupEyeDropper(triggerId, colorPicker, hexInput) {
+            const trigger = document.getElementById(triggerId);
+            if (!trigger) return;
+
+            // Hide button if EyeDropper API is not supported
+            if (!('EyeDropper' in window)) {
+                trigger.classList.add('hidden');
+                console.warn('EyeDropper API not supported in this browser.');
+                return;
+            }
+
+            const eyeDropper = new EyeDropper();
+
+            trigger.addEventListener('click', async () => {
+                try {
+                    const result = await eyeDropper.open();
+                    const color = result.sRGBHex;
+                    colorPicker.value = color;
+                    hexInput.value = color;
+                } catch (e) {
+                    console.info('EyeDropper was cancelled by the user.');
+                }
+            });
+        }
+
+        setupEyeDropper('eyedropper-1', colorPicker1, hexInput1);
+        setupEyeDropper('eyedropper-2', colorPicker2, hexInput2);
 
         swatches1.forEach(swatch => {
             swatch.addEventListener('click', () => {
